@@ -51,10 +51,14 @@ import { TraceProvider, getGlobalTraceProvider } from '../src/tracing/provider';
 
 import { Runner } from '../src/run';
 import { Agent } from '../src/agent';
+import { StreamedRunResult } from '../src/result';
+import { RunContext } from '../src/runContext';
+import { RunState } from '../src/runState';
 import { FakeModel, fakeModelMessage, FakeModelProvider } from './stubs';
 import { Usage } from '../src/usage';
 import * as protocol from '../src/types/protocol';
 import { setDefaultModelProvider } from '../src/providers';
+import { AsyncLocalStorage as BrowserAsyncLocalStorage } from '../src/shims/shims-browser';
 
 class TestExporter implements TracingExporter {
   public exported: Array<(Trace | Span<any>)[]> = [];
@@ -1063,6 +1067,40 @@ describe('withTrace & span helpers (integration)', () => {
     expect(observed).toEqual(['outer', 'inner', 'outer']);
     expect(storage.runCalls).toBe(2);
     expect(storage.enterWithCalls).toBeGreaterThan(0);
+    expect(getCurrentTrace()).toBeNull();
+  });
+
+  it('keeps browser shim context active until a streamed result settles', async () => {
+    const storage = new BrowserAsyncLocalStorage<any>();
+    let resolveStream!: () => void;
+    const streamLoopPromise = new Promise<void>((resolve) => {
+      resolveStream = resolve;
+    });
+    let activeTrace: Trace | null = null;
+
+    setTracingContextStorage(storage);
+
+    await withTrace('streaming-workflow', async (trace) => {
+      activeTrace = trace;
+      const agent = new Agent({ name: 'stream-agent' });
+      const state: RunState<unknown, Agent<any, any>> = new RunState(
+        new RunContext(),
+        [],
+        agent,
+        1,
+      );
+      const result = new StreamedRunResult({ state });
+      result._setStreamLoopPromise(streamLoopPromise);
+      return result;
+    });
+
+    expect(getCurrentTrace()).toBe(activeTrace);
+
+    resolveStream();
+    await streamLoopPromise;
+    await Promise.resolve();
+    await Promise.resolve();
+
     expect(getCurrentTrace()).toBeNull();
   });
 
