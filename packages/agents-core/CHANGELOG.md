@@ -1,5 +1,11 @@
 # @openai/agents-core
 
+## 0.11.5
+
+### Patch Changes
+
+- 1ce5404: feat: add opt-in recovery for missing function tools
+
 ## 0.11.4
 
 ### Patch Changes

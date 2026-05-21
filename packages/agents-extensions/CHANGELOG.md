@@ -1,5 +1,13 @@
 # @openai/agents-extensions
 
+## 0.11.5
+
+### Patch Changes
+
+- 6d61675: fix: #1340 preserve AI SDK output token details in usage tracing
+- Updated dependencies [1ce5404]
+  - @openai/agents-core@0.11.5
+
 ## 0.11.4
 
 ### Patch Changes
