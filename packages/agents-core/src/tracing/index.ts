@@ -8,8 +8,10 @@ export {
   getOrCreateTrace,
   resetCurrentSpan,
   setCurrentSpan,
+  setTracingContextStorage,
   withTrace,
 } from './context';
+export type { TracingContextStorage } from './context';
 export * from './createSpans';
 export {
   BatchTraceProcessor,
